@@ -24,7 +24,8 @@ void main() {
   MultiRequestHandler requestHandler = new MultiRequestHandler();
   requestHandler.registerDefaultHandler(simpleServerRequestHandler);
 
-  Connection connection = createLoopBackConnection(requestHandler);
+  Connection connection = createLoopBackConnection(requestHandler, null,
+    new Duration(milliseconds: 5));
 
 //  for (int i=0; i<10; i++) {
 //    connection.send(()=>new ClientRequest('dummyType','request$i')).then(

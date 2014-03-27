@@ -498,13 +498,29 @@ class LoopBackTransport extends Transport {
   final _authenticatedUserId;
 
   /**
+   * If set to [Duration], loopBackConnection will send requests periodically
+   * with the delay of [_duration].
+   */
+  final _duration;
+
+  Timer _timer;
+
+  /**
    * Indicates whether a [LoopBackRequest] is currently on the way.
    */
   bool _isRunning = false;
 
   bool _isDirty;
 
-  LoopBackTransport(this._sendLoopBackRequest, [this._authenticatedUserId = null]);
+  LoopBackTransport(this._sendLoopBackRequest,
+    [this._authenticatedUserId = null, this._duration = null]);
+
+  setHandlers(prepareRequest, handleResponse, handleError, [handleDisconnect = null, handleReconnect = null]) {
+      super.setHandlers(prepareRequest, handleResponse, handleError, handleDisconnect, handleReconnect);
+      if (_duration != null) {
+        _timer = new Timer.periodic(_duration, (_) => performRequest());
+      }
+  }
 
   markDirty() {
     _isDirty = true;
