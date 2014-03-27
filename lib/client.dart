@@ -512,11 +512,24 @@ class LoopBackTransport extends Transport {
 
   bool _isDirty;
 
+  void _disconnect() {
+    _connected = false;
+    _disconnectConnection();
+  }
+
+  void _reconnect() {
+    _connected = true;
+    _reconnectConnection();
+  }
+
+  bool _connected = true;
+
   LoopBackTransport(this._sendLoopBackRequest,
     [this._authenticatedUserId = null, this._duration = null]);
 
   setHandlers(prepareRequest, handleResponse, handleError, [handleDisconnect = null, handleReconnect = null]) {
       super.setHandlers(prepareRequest, handleResponse, handleError, handleDisconnect, handleReconnect);
+
       if (_duration != null) {
         _timer = new Timer.periodic(_duration, (_) => performRequest());
       }
@@ -527,19 +540,30 @@ class LoopBackTransport extends Transport {
     performRequest();
   }
 
+  dispose() {
+    if (_timer != null) _timer.cancel();
+  }
+
   bool _shouldSendLoopBackRequest() {
-    return !_isRunning &&
-        _isDirty;
+    if (_duration == null) {
+      return !_isRunning && _isDirty;
+    } else {
+      return !_isRunning && _connected;
+    }
   }
 
   void _openRequest() {
     _isRunning = true;
-    _isDirty = false;
+    if (_duration == null) {
+      _isDirty = false;
+    }
   }
 
   void _closeRequest() {
     _isRunning = false;
-    performRequest();
+    if (_duration == null) {
+      performRequest();
+    }
   }
 
   /**
@@ -560,8 +584,13 @@ class LoopBackTransport extends Transport {
       _handleResponse({'responses': response, 'authenticatedUserId': _authenticatedUserId});
       _closeRequest();
     }).catchError((e, s) {
-      logger.shout('error: ',e,s);
-      _handleError(new FailedRequestException());
+      if (e is ConnectionError) {
+        _handleError(e);
+        _disconnect();
+      } else {
+        logger.shout('error: ',e,s);
+        _handleError(new FailedRequestException());
+      }
       _closeRequest();
     }));
 

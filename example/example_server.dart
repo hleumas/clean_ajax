@@ -24,25 +24,20 @@ void main() {
   MultiRequestHandler requestHandler = new MultiRequestHandler();
   requestHandler.registerDefaultHandler(simpleServerRequestHandler);
 
-  Connection connection = createLoopBackConnection(requestHandler, null,
-    new Duration(milliseconds: 5));
+  Connection connection = createLoopBackConnection(requestHandler);
 
-//  for (int i=0; i<10; i++) {
-//    connection.send(()=>new ClientRequest('dummyType','request$i')).then(
-//        (response) => print(response)
-//    );
-//  }
+  for (int i=0; i<10; i++) {
+    connection.send(()=>new ClientRequest('dummyType','request$i')).then(
+            (response) => print(response)
+    );
+  }
 
-  connection.sendPeriodically(() => new ClientRequest("dummyType", 'text')).listen(
-      (response) => print(response)
-  );
-
-//  Backend.bind('0.0.0.0', 8080, []).then((backend) {
-//    backend.addDefaultHttpHeader('Access-Control-Allow-Origin','*');
-//    backend.addDefaultHttpHeader('Access-Control-Allow-Headers','*');
-//    backend.addRoute('resources', new Route('/resources/'));
-//    backend.addRoute('static', new Route('/*'));
-//    backend.addView('resources', requestHandler.handleHttpRequest);
-//    backend.addStaticView('static', './');
-//  });
+  Backend.bind([], new SHA256()).then((backend) {
+    backend.addDefaultHttpHeader('Access-Control-Allow-Origin','*');
+    backend.addDefaultHttpHeader('Access-Control-Allow-Headers','*');
+    backend.addRoute('resources', new Route('/resources/'));
+    backend.addRoute('static', new Route('/*'));
+    backend.addView('resources', requestHandler.handleHttpRequest);
+    backend.addStaticView('static', './');
+  });
 }
