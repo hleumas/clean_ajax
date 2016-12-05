@@ -28,7 +28,7 @@ void main() {
 
   for (int i=0; i<10; i++) {
     connection.send(()=>new ClientRequest('dummyType','request$i')).then(
-        (response) => print(response)
+            (response) => print(response)
     );
   }
 
